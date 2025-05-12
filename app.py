@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # -*- coding:utf-8 -*-
+import os
 import time
+import random
 import locale
 import math
 from datetime import datetime
@@ -22,6 +24,12 @@ def rotate_point(x, y, centre_x, centre_y, angle):
 
 def rotate_polygon(xy, centre_x, centre_y, angle):
     return [rotate_point(x, y, centre_x, centre_y, angle) for x, y in xy]
+
+
+def parse_range(s):
+    start, *end = s.split('-')
+    end = end[0] if end else start
+    return int(start), int(end) + 1
 
 
 class FakeEpd:
@@ -120,6 +128,23 @@ class App:
         except:
             print('Fake EPD is using')
             self.epd = FakeEpd()
+        self.imgs = {}
+        for root, _, files in os.walk('./img/'):
+            for file in files:
+                if not file.endswith('.png'):
+                    continue
+                img = Image.open(root + '/' + file)
+                m, d, *_ = file.split('_')
+                for i in range(*parse_range(m)):
+                    imgs_m = self.imgs.get(i, {})
+                    if not imgs_m:
+                        self.imgs[i] = imgs_m
+                    for j in range(*parse_range(d)):
+                        imgs_d = imgs_m.get(j, [])
+                        if not imgs_d:
+                            imgs_m[j] = imgs_d
+                        imgs_d.append(img)
+
         self.epd.init()
         self.epd.Clear()
         self.font16 = ImageFont.truetype('./Academy.ttf', 16)
@@ -137,6 +162,7 @@ class App:
 
     def write_all(self):
         self.new_frame()
+        self.write_img()
         self.write_time()
         self.write_weather()
         self.update()
@@ -167,9 +193,11 @@ class App:
         text = time.strftime('%A')
         self.write_text(text, self.font128, 0, 300, self.epd.width)
 
-    def write_bmp(self):
-        bmp = Image.open('./tree.bmp')
-        self.himage.paste(bmp, (212, 230))
+    def write_img(self):
+        imgs_m = self.imgs.get(time.localtime().tm_mon, self.imgs.get(0, {}))
+        imgs_d = imgs_m.get(time.localtime().tm_mday, imgs_m.get(0, []))
+        if imgs_d:
+            self.himage.paste(random.choice(imgs_d), (0, self.epd.height - 250))
 
     def update_weather(self):
         half_period = 90
@@ -206,8 +234,8 @@ class App:
                 else:
                     draw.write_moon(width * i + width * 2 // 3, header_offset + sun_small_r * 2, moon_small_r)
             if w.cloud_size:
-                cloud_width = width * [0, 0.5, 0.6, 0.7, 0.8][w.cloud_size]
-                draw.write_cloud(width * i + (width - cloud_width) // 2, cloud_offset, cloud_width, w.cloud_size == 4)
+                cloud_width = width * [0, 0.3, 0.5, 0.7, 0.8, 0.8][w.cloud_size]
+                draw.write_cloud(width * i + (width - cloud_width) // 2, cloud_offset, cloud_width, w.cloud_size == 5)
             if w.rain_mask & 4:
                 draw.write_rain(width_center, cloud_offset + 10, w.rain_size)
             if w.rain_mask & 1:

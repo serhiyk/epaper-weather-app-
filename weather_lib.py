@@ -21,7 +21,7 @@ CLOUD_SUN_SIZE = {
     800: (0, 2),
     801: (1, 1),
     802: (2, 1),
-    803: (3, 0),
+    803: (3, 1),
     804: (4, 0)
 }
 # snow radius, snow number mask, rain radius, rain number mask, thunder
@@ -96,7 +96,7 @@ class Forecast:
         if rain_snow:
             weather_id = next(iter(rain_snow))
             self.snow_size, self.snow_mask, self.rain_size, self.rain_mask, self.thunder = RAIN_SNOW_SIZE[weather_id]
-            self.cloud_size = 4
+            self.cloud_size = 5
         cloud_sun = self.weather_ids & set(CLOUD_SUN_SIZE.keys())
         if cloud_sun:
             weather_id = next(iter(cloud_sun))
