@@ -13,6 +13,7 @@ try:
     import epd7in5_V2
 except:
     print('EPD library error')
+import sensor_lib
 
 
 def rotate_point(x, y, centre_x, centre_y, angle):
@@ -128,6 +129,11 @@ class App:
         except:
             print('Fake EPD is using')
             self.epd = FakeEpd()
+        try:
+            self.sensor = sensor_lib.Sensor()
+        except:
+            print('Fake Sensor is using')
+            self.sensor = sensor_lib.FakeSensor()
         self.imgs = {}
         for root, _, files in os.walk('./img/'):
             for file in files:
@@ -165,6 +171,7 @@ class App:
         self.write_img()
         self.write_time()
         self.write_weather()
+        self.write_sensors()
         self.update()
 
     def new_frame(self):
@@ -272,6 +279,15 @@ class App:
     def write_weather(self):
         self.himage.paste(self.weather_image, (0, 0))
 
+    def write_sensors(self):
+        self.sensor.update()
+        temperature = self.sensor.get_temperature()
+        text = f'{temperature:.1f}°'
+        self.write_text(text, self.font64, 5, 90)
+        humidity = int(self.sensor.get_humidity())
+        pressure = int(self.sensor.get_pressure() * 0.750061683)
+        text = f'{humidity}%    {pressure}'
+        self.write_text(text, self.font16, 15, 145)
 
 if __name__ == "__main__":
     locale.setlocale(locale.LC_ALL, 'uk_UA.UTF-8')
