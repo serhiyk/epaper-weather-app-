@@ -5,6 +5,7 @@ import time
 import random
 import locale
 import math
+import urllib.request
 from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont, ImageChops
 from weather_lib import Weather
@@ -172,6 +173,7 @@ class App:
         self.write_time()
         self.write_weather()
         self.write_sensors()
+        self.write_sensors_ext()
         self.update()
 
     def new_frame(self):
@@ -288,6 +290,19 @@ class App:
         pressure = int(self.sensor.get_pressure() * 0.750061683)
         text = f'{humidity}%    {pressure}'
         self.write_text(text, self.font16, 15, 145)
+
+    def write_sensors_ext(self):
+        try:
+            with urllib.request.urlopen('http://192.168.0.109/temperaturec', timeout=2) as response:
+                html_content = response.read()
+                temperature = float(html_content)
+                text = f'{temperature:.1f}°'
+                self.write_text(text, self.font64, 5, 170)
+        except urllib.error.URLError as e:
+            print(f"Error accessing the URL: {e.reason}")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+
 
 if __name__ == "__main__":
     locale.setlocale(locale.LC_ALL, 'uk_UA.UTF-8')
